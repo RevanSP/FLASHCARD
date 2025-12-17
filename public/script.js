@@ -172,7 +172,7 @@ class FlashcardManager {
     const m = document.getElementById("add-flashcard"),
       add = m.querySelector(".bg-base-200.p-3 button:first-child"),
       save = m.querySelector(".bg-base-200.p-3 button:last-child"),
-      box = m.querySelector(".flex-1.overflow-auto");
+      box = m.querySelector(".flex-1.overflow-y-auto.overflow-none");
 
     save.disabled = true;
     save.classList.add("btn-disabled", "opacity-60", "cursor-not-allowed");
@@ -216,7 +216,7 @@ class FlashcardManager {
     const m = document.getElementById("update-modal"),
       add = m.querySelector(".bg-base-200.p-3 button:first-child"),
       save = m.querySelector(".bg-base-200.p-3 button:last-child"),
-      box = m.querySelector(".flex-1.overflow-auto");
+      box = m.querySelector(".flex-1.overflow-y-auto.overflow-none");
 
     save.disabled = true;
     save.classList.add("btn-disabled", "opacity-60", "cursor-not-allowed");
@@ -350,7 +350,7 @@ class FlashcardManager {
     const fc = this.getFlashcard(id),
       m = document.getElementById("update-modal"),
       t = m.querySelector('input[placeholder="TITLE"]'),
-      c = m.querySelector(".flex-1.overflow-auto");
+      c = m.querySelector(".flex-1.overflow-y-auto.overflow-none");
     if (!fc) return;
     t.value = fc.title || "";
     c.querySelectorAll(".join.w-full").forEach((f) => f.remove());
@@ -430,7 +430,7 @@ class FlashcardManager {
     let randomizedFields = shuffleArray(fc.fields);
 
     const modal = document.getElementById("preview-flashcard");
-    const container = modal.querySelector(".flex-1.overflow-auto");
+    const container = modal.querySelector(".flex-1.overflow-y-auto");
 
     container.innerHTML = `
     <div class="flex flex-col items-center justify-center w-full">
