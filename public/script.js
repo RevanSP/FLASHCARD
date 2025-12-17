@@ -1,3 +1,4 @@
+// Flashcard Manager
 class FlashcardManager {
   constructor() {
     this.storageKey = "flashcards";
@@ -12,6 +13,9 @@ class FlashcardManager {
     this.setupSelectionControls();
     lucide.createIcons();
   }
+
+  generateId = () =>
+    Date.now().toString(36) + Math.random().toString(36).substr(2);
 
   getFlashcards = () =>
     JSON.parse(localStorage.getItem(this.storageKey) || "[]");
@@ -104,59 +108,59 @@ class FlashcardManager {
   createCardHTML(fc) {
     const count = Array.isArray(fc.fields) ? fc.fields.length : 0;
     const html = `
-  <div class="card w-full bg-base-100 cursor-pointer shadow-md rounded-lg" data-id="${
-    fc.id
-  }">
-    <div class="card-body">
-      <div class="flex items-center justify-between gap-2 w-full">
-        <div class="flex-1 min-w-0 overflow-hidden">
-          <h2 class="block text-sm font-semibold truncate w-full max-w-full">${
-            fc.title || "Untitled"
-          }</h2>
-        </div>
-        <div class="flex items-center gap-2 shrink-0 ml-1" onclick="event.stopPropagation()">
-          <input 
-            type="checkbox"
-            class="checkbox bg-base-300 border-none rounded-sm checkbox-lg cursor-pointer"
-            onclick="event.stopPropagation(); flashcardManager.toggleSelection('${
-              fc.id
-            }', this.checked)"
-          />
-          <div class="dropdown dropdown-end" onclick="event.stopPropagation()">
-            <div tabindex="0" role="button" class="btn btn-square btn-sm bg-base-300 border-none">
-              <i data-lucide="ellipsis-vertical" class="w-4"></i>
+      <div class="card w-full bg-base-100 cursor-pointer shadow-md rounded-lg" data-id="${
+        fc.id
+      }">
+        <div class="card-body">
+          <div class="flex items-center justify-between gap-2 w-full">
+            <div class="flex-1 min-w-0 overflow-hidden">
+              <h2 class="block text-sm font-semibold truncate w-full max-w-full">${
+                fc.title || "Untitled"
+              }</h2>
             </div>
-            <ul tabindex="-1" class="text-xs dropdown-content menu bg-base-100 mt-1 menu-xs rounded-box z-10 w-40 p-2 shadow-sm">
-              <li>
-                <button onclick="event.stopPropagation(); flashcardManager.exportToJSON();">
-                  <i data-lucide="file-braces-corner" class="w-4"></i> EXPORT TO JSON
-                </button>
-              </li>
-              <li>
-                <button onclick="event.stopPropagation(); flashcardManager.openUpdateModal('${
+            <div class="flex items-center gap-2 shrink-0 ml-1" onclick="event.stopPropagation()">
+              <input 
+                type="checkbox"
+                class="checkbox bg-base-300 border-none rounded-sm checkbox-lg cursor-pointer"
+                onclick="event.stopPropagation(); flashcardManager.toggleSelection('${
                   fc.id
-                }')">
-                  <i data-lucide="pen" class="w-4"></i> UPDATE
-                </button>
-              </li>
-              <li>
-                <button onclick="event.stopPropagation(); flashcardManager.openDeleteModal('${
-                  fc.id
-                }')">
-                  <i data-lucide="trash" class="w-4"></i> DELETE
-                </button>
-              </li>
-            </ul>
+                }', this.checked)"
+              />
+              <div class="dropdown dropdown-end" onclick="event.stopPropagation()">
+                <div tabindex="0" role="button" class="btn btn-square btn-sm bg-base-300 border-none">
+                  <i data-lucide="ellipsis-vertical" class="w-4"></i>
+                </div>
+                <ul tabindex="-1" class="text-xs dropdown-content menu bg-base-100 mt-1 menu-xs rounded-box z-10 w-40 p-2 shadow-sm">
+                  <li>
+                    <button onclick="event.stopPropagation(); flashcardManager.exportToJSON();">
+                      <i data-lucide="file-braces-corner" class="w-4"></i> EXPORT TO JSON
+                    </button>
+                  </li>
+                  <li>
+                    <button onclick="event.stopPropagation(); flashcardManager.openUpdateModal('${
+                      fc.id
+                    }')">
+                      <i data-lucide="pen" class="w-4"></i> UPDATE
+                    </button>
+                  </li>
+                  <li>
+                    <button onclick="event.stopPropagation(); flashcardManager.openDeleteModal('${
+                      fc.id
+                    }')">
+                      <i data-lucide="trash" class="w-4"></i> DELETE
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="badge badge-neutral badge-dash mt-1">
+            <p class="italic text-xs text-gray-600">${count} FLASHCARD</p>
           </div>
         </div>
       </div>
-
-      <div class="badge badge-neutral badge-dash mt-1">
-        <p class="italic text-xs text-gray-600">${count} FLASHCARD</p>
-      </div>
-    </div>
-  </div>
-  `;
+      `;
     return html;
   }
 
@@ -172,7 +176,8 @@ class FlashcardManager {
     const m = document.getElementById("add-flashcard"),
       add = m.querySelector(".bg-base-200.p-3 button:first-child"),
       save = m.querySelector(".bg-base-200.p-3 button:last-child"),
-      box = m.querySelector(".flex-1.overflow-y-auto.overflow-none");
+      box =
+        m.querySelector(".flex-1.overflow-auto") || m.querySelector(".flex-1");
 
     save.disabled = true;
     save.classList.add("btn-disabled", "opacity-60", "cursor-not-allowed");
@@ -216,7 +221,8 @@ class FlashcardManager {
     const m = document.getElementById("update-modal"),
       add = m.querySelector(".bg-base-200.p-3 button:first-child"),
       save = m.querySelector(".bg-base-200.p-3 button:last-child"),
-      box = m.querySelector(".flex-1.overflow-y-auto.overflow-none");
+      box =
+        m.querySelector(".flex-1.overflow-auto") || m.querySelector(".flex-1");
 
     save.disabled = true;
     save.classList.add("btn-disabled", "opacity-60", "cursor-not-allowed");
@@ -315,14 +321,18 @@ class FlashcardManager {
     c.insertAdjacentHTML(
       "beforeend",
       `
-    <div class="join w-full mt-4 field-group">
-      <div class="w-full"><input class="w-full text-xs input join-item bg-base-100 shadow-md border-y-0 border-base-300 input-sm border-l-0 border-r-2" placeholder="Content ..." /></div>
-      <input class="input w-full text-xs join-item bg-base-100 shadow-md border-y-0 border-base-300 input-sm border-r-0 border-l-2" placeholder="Explanation ..." />
-      <button class="btn join-item bg-base-200 shadow-md border-none btn-square btn-sm remove-field-btn"><i data-lucide="x"></i></button>
-    </div>`
+        <div class="join w-full mt-4 field-group">
+          <div class="w-full"><input class="w-full text-xs input join-item bg-base-100 shadow-md border-y-0 border-base-300 input-sm border-l-0 border-r-2" placeholder="Content ..." /></div>
+          <input class="input w-full text-xs join-item bg-base-100 shadow-md border-y-0 border-base-300 input-sm border-r-0 border-l-2" placeholder="Explanation ..." />
+          <button class="btn join-item bg-base-200 shadow-md border-none btn-square btn-sm remove-field-btn"><i data-lucide="x"></i></button>
+        </div>`
     );
     const rm = c.querySelector(".field-group:last-child .remove-field-btn");
-    rm.addEventListener("click", () => rm.closest(".field-group").remove());
+    rm.addEventListener("click", () => {
+      rm.closest(".field-group").remove();
+      const modal = rm.closest("dialog");
+      modal.dispatchEvent(new Event("input"));
+    });
     lucide.createIcons();
   }
 
@@ -339,7 +349,7 @@ class FlashcardManager {
   resetModal(m) {
     m.querySelector('input[placeholder="TITLE"]').value = "";
     m.querySelectorAll(".join.w-full").forEach((g, i) => {
-      i >= 2
+      i >= 1
         ? g.remove()
         : g.querySelectorAll("input").forEach((x) => (x.value = ""));
     });
@@ -349,9 +359,16 @@ class FlashcardManager {
     this.currentEditId = id;
     const fc = this.getFlashcard(id),
       m = document.getElementById("update-modal"),
-      t = m.querySelector('input[placeholder="TITLE"]'),
-      c = m.querySelector(".flex-1.overflow-y-auto.overflow-none");
-    if (!fc) return;
+      t = m?.querySelector('input[placeholder="TITLE"]'),
+      c =
+        m?.querySelector(".flex-1.overflow-auto") ||
+        m?.querySelector(".flex-1");
+
+    if (!fc || !c) {
+      console.warn("⚠️ Update modal container not found.");
+      return;
+    }
+
     t.value = fc.title || "";
     c.querySelectorAll(".join.w-full").forEach((f) => f.remove());
     (fc.fields?.length
@@ -361,25 +378,26 @@ class FlashcardManager {
       c.insertAdjacentHTML(
         "beforeend",
         `
-      <div class="join w-full mt-4 field-group">
-        <input class="w-full input join-item text-xs bg-base-100 shadow-md border-y-0 border-base-300 input-sm border-l-0 border-r-2" value="${
-          f.content
-        }" placeholder="Content ..." />
-        <input class="input w-full text-xs join-item bg-base-100 shadow-md border-y-0 border-base-300 input-sm border-r-0 border-l-2" value="${
-          f.explanation
-        }" placeholder="Explanation ..." />
-        ${
-          i > 0
-            ? '<button class="btn join-item bg-base-200 shadow-md border-none btn-square btn-sm remove-field-btn"><i data-lucide="x"></i></button>'
-            : ""
-        }
-      </div>`
+          <div class="join w-full mt-4 field-group">
+            <input class="w-full input join-item text-xs bg-base-100 shadow-md border-y-0 border-base-300 input-sm border-l-0 border-r-2" value="${
+              f.content
+            }" placeholder="Content ..." />
+            <input class="input w-full text-xs join-item bg-base-100 shadow-md border-y-0 border-base-300 input-sm border-r-0 border-l-2" value="${
+              f.explanation
+            }" placeholder="Explanation ..." />
+            ${
+              i > 0
+                ? '<button class="btn join-item bg-base-200 shadow-md border-none btn-square btn-sm remove-field-btn"><i data-lucide="x"></i></button>'
+                : ""
+            }
+          </div>`
       );
     });
     c.querySelectorAll(".remove-field-btn").forEach((b) =>
-      b.addEventListener("click", (e) =>
-        e.target.closest(".field-group").remove()
-      )
+      b.addEventListener("click", (e) => {
+        e.target.closest(".field-group").remove();
+        m.dispatchEvent(new Event("input"));
+      })
     );
     lucide.createIcons();
     openModal("update-modal", { name: "UPDATE FLASHCARD" });
@@ -430,19 +448,19 @@ class FlashcardManager {
     let randomizedFields = shuffleArray(fc.fields);
 
     const modal = document.getElementById("preview-flashcard");
-    const container = modal.querySelector(".flex-1.overflow-y-auto");
+    const container = modal.querySelector(".flex-1");
 
     container.innerHTML = `
-    <div class="flex flex-col items-center justify-center w-full">
-      <div class="swiper mySwiper aspect-square w-full max-w-md mx-auto flex items-center justify-center">
-        <div class="swiper-wrapper"></div>
-      </div>
-      <div id="flashcard-counter" class="mt-3 text-xs text-gray-500 font-semibold text-center"></div>
-      <button id="restart-btn" class="btn btn-sm mt-4 bg-base-100 border-none shadow-md hidden">
-        <i data-lucide="refresh-ccw" class="w-4 h-4"></i> Restart
-      </button>
-    </div>
-  `;
+        <div class="flex flex-col items-center justify-center w-full">
+          <div class="swiper mySwiper aspect-square w-full max-w-md mx-auto flex items-center justify-center">
+            <div class="swiper-wrapper"></div>
+          </div>
+          <div id="flashcard-counter" class="mt-3 text-xs text-gray-500 font-semibold text-center"></div>
+          <button id="restart-btn" class="btn btn-sm mt-4 bg-base-100 border-none shadow-md hidden">
+            <i data-lucide="refresh-ccw" class="w-4 h-4"></i> Restart
+          </button>
+        </div>
+      `;
 
     lucide.createIcons();
 
@@ -457,16 +475,16 @@ class FlashcardManager {
           const backSize = getFontSizeClass(f.explanation, true);
 
           return `
-        <div class="swiper-slide aspect-square bg-base-100 rounded-2xl shadow-lg p-6 relative">
-          <div class="h-full flex flex-col justify-center items-center text-center">
-            <p class="font-bold mb-4 flashcard-front ${frontSize}">${f.content}</p>
-            <p class="text-gray-500 flashcard-back hidden ${backSize}">${f.explanation}</p>
-            <button class="btn absolute bottom-3 right-3 bg-base-300 border-none shadow-md flip-btn">
-              <i data-lucide="refresh-ccw" class="w-4 h-4"></i> Flip
-            </button>
-          </div>
-        </div>
-      `;
+            <div class="swiper-slide aspect-square bg-base-100 rounded-2xl shadow-lg p-6 relative">
+              <div class="h-full flex flex-col justify-center items-center text-center">
+                <p class="font-bold mb-4 flashcard-front ${frontSize}">${f.content}</p>
+                <p class="text-gray-500 flashcard-back hidden ${backSize}">${f.explanation}</p>
+                <button class="btn absolute bottom-3 right-3 bg-base-300 border-none shadow-md flip-btn">
+                  <i data-lucide="refresh-ccw" class="w-4 h-4"></i> Flip
+                </button>
+              </div>
+            </div>
+          `;
         })
         .join("");
 
@@ -553,6 +571,7 @@ class FlashcardManager {
 
 const flashcardManager = new FlashcardManager();
 
+// Import Handler
 const fileInput = document.getElementById("jsonInput"),
   importModal = document.getElementById("import_modal"),
   importSubmitBtn = document.getElementById("importSubmit"),
@@ -563,9 +582,9 @@ let isValidJSON = false;
 
 function updateImportStatus(icon, text, color = "text-gray-500") {
   importStatus.innerHTML = `
-      <i data-lucide="${icon}" class="w-12 h-12 mb-3 ${color}"></i>
-      <p class="${color} text-sm">${text}</p>
-    `;
+          <i data-lucide="${icon}" class="w-12 h-12 mb-3 ${color}"></i>
+          <p class="${color} text-sm">${text}</p>
+        `;
   lucide.createIcons();
 }
 
@@ -667,10 +686,7 @@ importSubmitBtn.addEventListener("click", () => {
   reader.readAsText(importedFile);
 });
 
-document.addEventListener("click", (e) => {
-  if (e.target.closest(".export-json-btn")) flashcardManager.exportToJSON();
-});
-
+// Toast Function
 const toast = document.getElementById("toast");
 const toastMessage = document.getElementById("toast-message");
 let toastTimeout;
@@ -686,3 +702,5 @@ function showToast(message) {
     toast.classList.add("opacity-0", "pointer-events-none");
   }, 3000);
 }
+
+lucide.createIcons();
