@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FLASHCARD.</title>
+  <link rel="icon" type="image/svg+xml" href="https://cdn-icons-png.flaticon.com/512/9145/9145817.png" />
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="public/style.css">
+</head>
+
+<body class="flex flex-col min-h-screen bg-base-300">
+  <div class="navbar bg-base-100 shadow-md border-0 border-none fixed top-0 left-0 right-0 z-20">
+    <div class="flex-1">
+      <a class="btn btn-ghost text-xl"><i data-lucide="zap" class="w-5 h-5"></i>&nbsp;FLASHCARD.</a>
+    </div>
+    <div class="flex-none">
+      <div class="dropdown dropdown-bottom dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-square btn-ghost"><i data-lucide="chevron-down"></i></div>
+        <ul tabindex="-1" class="dropdown-content menu bg-base-100 rounded-box z-10 w-48 p-2 shadow-sm mt-4">
+          <li>
+            <button class="btn btn-ghost w-full btn-sm text-xs justify-start gap-2"
+              onclick="openModal('add-flashcard', { name: 'CREATE FLASHCARD' })">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>CREATE FLASHCARD</span>
+            </button>
+          </li>
+          <li>
+            <button class="btn btn-ghost w-full btn-sm text-xs justify-start gap-2" onclick="import_modal.showModal()">
+              <i data-lucide="package" class="w-4 h-4"></i>
+              <span>IMPORT FLASHCARD</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+      <button id="theme-toggle" class="btn btn-square btn-ghost">
+        <i id="theme-icon" data-lucide="sun" class="w-3 h-3"></i>
+      </button>
+    </div>
+  </div>
+
+  <main class="flex-grow">
+    <div class="max-w-6xl mx-auto space-y-2 px-4 sm:px-6 lg:px-8 mb-4 mt-20">
+      <div class="flex items-center gap-2 mb-3">
+        <label class="input flex-1 input-sm bg-base-100 shadow-md border-none">
+          <i data-lucide="search" class="w-3"></i>
+          <input type="search" required placeholder="Search" class="text-xs w-full" />
+        </label>
+
+        <button id="deleteSelectedBtn"
+          class="btn bg-base-100 btn-sm shadow-md border-none btn-square opacity-60 cursor-not-allowed" disabled>
+          <i data-lucide="delete" class="w-4"></i>
+        </button>
+        <button id="selectAllBtn" class="btn bg-base-100 btn-sm shadow-md border-none btn-square">
+          <i data-lucide="check-check" class="w-4"></i>
+        </button>
+      </div>
+      <div role="alert" id="search-alert" class="alert text-xs bg-base-100 shadow-md rounded-lg">
+        <i data-lucide="circle-alert" class="w-3"></i>
+        <span>Showing all flashcards.</span>
+      </div>
+      <div id="tutorial-card" class="card w-full bg-base-100 shadow-md rounded-lg mt-2">
+        <div class="card-body text-md">
+          <h2 class="card-title text-base font-semibold mb-0.5">Welcome to <b>FLASHCARD.</b></h2>
+          <p class="text-text-xs">
+            This project lets you <strong class="uppercase">create, update, and manage flashcards</strong> for studying.
+          </p>
+          <ul class="list-disc ml-5 space-y-1 text-xs">
+            <li>Click the <strong>▼</strong> icon on the top-right to <strong class="uppercase">create</strong> a
+              flashcard.</li>
+            <li>Use the <strong class="uppercase">search bar</strong> above to find specific cards.</li>
+            <li>You can <strong class="uppercase">edit, delete,</strong> <strong class="uppercase">import</strong>, or
+              <strong class="uppercase">export</strong>
+              cards easily.
+            </li>
+          </ul>
+          <div class="divider text-xs text-gray-500 my-3">Need help creating data?</div>
+          <div class="bg-base-300 border-none rounded-lg p-3 shadow-md">
+            <p class="text-xs font-semibold mb-1 flex items-center gap-2 mb-3">
+              <i data-lucide="badge-alert" class="w-4 h-4"></i>
+              Example Flashcard JSON Structure :
+            </p>
+            <pre class="text-xs bg-base-100 rounded-lg p-2 border-none overflow-x-auto">
+[
+  {
+    "title": "Japanese Kanji",
+    "fields": [
+      { "content": "水", "explanation": "Water" },
+      { "content": "火", "explanation": "Fire" },
+    ]
+  }
+]</pre>
+            <p class="text-[11px] text-gray-500 italic mt-2">
+              Each flashcard object must contain a <code>title</code> and a <code>fields</code> array with
+              <code>content</code> and <code>explanation</code> keys.
+            </p>
+          </div>
+          <div class="bg-base-300 border-none rounded-lg p-3 mt-3 shadow-md">
+            <p class="text-xs font-semibold mb-2 flex items-center gap-2">
+              <i data-lucide="bot" class="w-4 h-4"></i>
+              Too lazy to write it yourself?
+            </p>
+            <p class="text-xs">
+              Ask an AI to generate it for you!
+            </p>
+            <p class="text-xs">Example prompt :
+              "Generate a JSON flashcard about 'Basic Japanese Numbers' using the structure shown above."
+            </p>
+            <div class="flex flex-wrap gap-2 mt-2 text-xs">
+              <span class="font-semibold text-gray-500">Try with :</span>
+              <a href="https://chat.openai.com/" target="_blank" class="link font-bold">ChatGPT</a> •
+              <a href="https://gemini.google.com/app" target="_blank" class="link font-bold">Gemini</a> •
+              <a href="https://claude.ai/new" target="_blank" class="link font-bold">Claude</a> •
+              <a href="https://copilot.microsoft.com/" target="_blank" class="link font-bold">Copilot</a>
+            </div>
+          </div>
+
+          <div class="mt-2 text-xs text-gray-500 italic">
+            Tip: Your flashcards are stored locally — no internet or account needed.
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <dialog id="update-modal"
+    class="m-0 h-full w-full max-h-none max-w-none bg-transparent p-0 outline-none fixed inset-0 z-50">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[-1]" onclick="handleBackdropClick(event, 'update-modal')">
+    </div>
+
+    <div id="update-modal-container" class="h-full w-full animateScaleIn">
+      <div class="flex h-full flex-col bg-base-300">
+
+        <div class="flex items-center justify-between p-2.5 bg-base-100 shadow-md z-10">
+          <h2 class="text-lg font-semibold">UPDATE FLASHCARD</h2>
+          <button class="btn btn-circle btn-xs btn-ghost text-xs" onclick="closeModal('update-modal')">✕</button>
+        </div>
+
+        <div class="flex-1 overflow-auto px-5 py-4 bg-base-300">
+          <label class="input w-full bg-base-100 shadow-md border-none input-sm">
+            <span class="label">TITLE</span>
+            <input type="text" placeholder="TITLE" class="text-xs" />
+          </label>
+          <div class="join w-full mt-4">
+            <div class="w-full">
+              <div class="w-full">
+                <input class="w-full input join-item text-xs bg-base-100 shadow-md border-y-0 border-base-300 input-sm
+border-l-0
+ border-r-2" placeholder="Content ..." />
+              </div>
+            </div>
+            <input class="input w-full text-xs join-item bg-base-100 shadow-md border-y-0 border-base-300 input-sm
+border-r-0
+ border-l-2" placeholder="Explanation ..." />
+          </div>
+          <div class="join w-full mt-4">
+            <div class="w-full">
+              <div class="w-full">
+                <input class="w-full text-xs input join-item bg-base-100 shadow-md border-y-0 border-base-300 input-sm
+border-l-0
+ border-r-2" placeholder="Content ..." />
+              </div>
+            </div>
+            <input class="input w-full text-xs join-item bg-base-100 shadow-md border-y-0 border-base-300 input-sm
+border-r-0
+ border-l-2" placeholder="Explanation ..." />
+            <button class="btn join-item bg-base-200 shadow-md border-none btn-square btn-sm"><i
+                data-lucide="x"></i></button>
+          </div>
+        </div>
+
+        <div
+          class="sticky bottom-0 bg-base-200 p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] shadow-[0_-2px_4px_-2px_rgba(0,0,0,0.1)] z-10">
+          <div class="flex justify-end gap-3">
+            <button class="btn bg-base-300 btn-sm shadow-md border-0 border-none">ADD FIELD</button>
+            <button class="btn bg-base-300 btn-sm shadow-md border-0 border-none">SAVE</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </dialog>
+
+  <dialog id="delete_modal" class="modal">
+    <div class="modal-box bg-base-300">
+      <form method="dialog">
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+      </form>
+      <h3 class="text-lg font-bold">DELETE FLASHCARD</h3>
+      <p class="py-4 text-xs">Are you sure you want to delete this flashcard?</p>
+      <div class="flex justify-end mt-4">
+        <button class="btn-sm bg-base-100 mr-0.5 btn text-xs shadow-md border-0 border-none">
+          SUBMIT
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="import_modal" class="modal">
+    <div class="modal-box bg-base-300">
+      <form method="dialog">
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+      </form>
+      <h3 class="text-lg font-bold">IMPORT FLASHCARD</h3>
+
+      <div id="importArea"
+        class="border-2 border-dashed mt-3 border-gray-500 rounded-xl bg-base-100 p-8 text-center cursor-pointer hover:bg-base-300 transition"
+        onclick="document.getElementById('jsonInput').click()">
+        <input id="jsonInput" type="file" accept=".json" class="hidden" />
+        <div id="importStatus" class="text-gray-400 flex flex-col items-center">
+          <i data-lucide="file-braces" class="w-12 h-12 mb-3"></i>
+          <p class="text-gray-500 text-sm">Click to import <code>.json</code> file</p>
+        </div>
+      </div>
+
+      <div class="flex justify-end mt-5">
+        <button id="importSubmit"
+          class="btn-sm bg-base-100 mr-0.5 btn text-xs shadow-md border-0 border-none opacity-60 cursor-not-allowed"
+          disabled>
+          SUBMIT
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="add-flashcard"
+    class="m-0 h-full w-full max-h-none max-w-none bg-transparent p-0 outline-none fixed inset-0 z-50">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[-1]"
+      onclick="handleBackdropClick(event, 'add-flashcard')"></div>
+    <div id="add-flashcard-container" class="h-full w-full animateScaleIn">
+      <div class="flex h-full flex-col bg-base-300">
+        <div class="flex items-center justify-between p-2.5 bg-base-100 shadow-md z-10">
+          <h2 class="text-lg font-semibold">CREATE FLASHCARD</h2>
+          <button class="btn btn-circle btn-xs btn-ghost text-xs" onclick="closeModal('add-flashcard')">✕</button>
+        </div>
+        <div class="flex-1 overflow-auto px-5 py-4 bg-base-300">
+          <label class="input w-full bg-base-100 shadow-md border-none input-sm">
+            <span class="label">TITLE</span>
+            <input type="text" placeholder="TITLE" class="text-xs" />
+          </label>
+          <div class="join w-full mt-4">
+            <div class="w-full">
+              <div class="w-full">
+                <input class="w-full input join-item text-xs bg-base-100 shadow-md border-y-0 border-base-300 input-sm
+border-l-0
+ border-r-2" placeholder="Content ..." />
+              </div>
+            </div>
+            <input class="input w-full text-xs join-item bg-base-100 shadow-md border-y-0 border-base-300 input-sm
+border-r-0
+ border-l-2" placeholder="Explanation ..." />
+          </div>
+        </div>
+        <div
+          class="sticky bottom-0 bg-base-200 p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] shadow-[0_-2px_4px_-2px_rgba(0,0,0,0.1)] z-10">
+          <div class="flex justify-end gap-3">
+            <button class="btn bg-base-300 btn-sm shadow-md border-0 border-none">ADD FIELD</button>
+            <button class="btn bg-base-300 btn-sm shadow-md border-0 border-none">SAVE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="preview-flashcard"
+    class="m-0 h-full w-full max-h-none max-w-none bg-transparent p-0 outline-none fixed inset-0 z-50">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[-1]"
+      onclick="handleBackdropClick(event, 'preview-flashcard')"></div>
+    <div id="preview-flashcard-container" class="h-full w-full animateScaleIn">
+      <div class="flex h-full flex-col bg-base-300">
+        <div class="flex items-center justify-between p-2.5 bg-base-100 shadow-md z-10">
+          <h2 class="text-lg font-semibold">PREVIEW FLASHCARD</h2>
+          <button class="btn btn-circle btn-xs btn-ghost text-xs" onclick="closeModal('preview-flashcard')">✕</button>
+        </div>
+        <div class="flex-1 flex items-center justify-center overflow-y-auto overflow-x-none bg-base-300 px-5 py-4">
+
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <footer
+    class="footer border-0 border-none bg-base-100 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] shadow-[0_-2px_4px_-2px_rgba(0,0,0,0.1)] flex justify-between items-center mt-auto w-full">
+    <aside class="text-left ml-2">
+      <p class="font-bold text-lg">It's Me Reiivan .</p>
+    </aside>
+    <nav class="flex gap-4 mr-2">
+      <a href="https://www.instagram.com/m9nokuro" class="text-2xl">
+        <i data-lucide="instagram"></i>
+      </a>
+      <a href="https://github.com/RevanSP" class="text-2xl">
+        <i data-lucide="github"></i>
+      </a>
+      <a href="https://web.facebook.com/profile.php?id=100082958149027&_rdc=1&_rdr#" class="text-2xl">
+        <i data-lucide="facebook"></i>
+      </a>
+    </nav>
+  </footer>
+  <div id="toast" class="toast !z-50 opacity-0 pointer-events-none transition-opacity duration-500">
+    <div class="alert border-none rounded-lg bg-base-200 shadow-md">
+      <span class="flex text-xs items-center">
+        <i data-lucide="info" class="w-4 h-4 mr-2 mb-0.5"></i>
+        <span id="toast-message"> </span>
+      </span>
+    </div>
+  </div>
+
+  <script src="public/modal.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="public/theme.js"></script>
+  <script src="public/script.js"></script>
+
+</body>
+
+</html>
