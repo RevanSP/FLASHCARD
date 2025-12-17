@@ -451,7 +451,7 @@ class FlashcardManager {
     const container = modal.querySelector(".flex-1");
 
     container.innerHTML = `
-        <div class="flex flex-col items-center justify-center w-full">
+        <div class="flex flex-col items-center justify-center w-full overflow-hidden">
           <div class="swiper mySwiper aspect-square w-full max-w-md mx-auto flex items-center justify-center">
             <div class="swiper-wrapper"></div>
           </div>
