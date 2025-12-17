@@ -13,46 +13,58 @@ class FlashcardManager {
     lucide.createIcons();
   }
 
-  getFlashcards = () =>
-    JSON.parse(localStorage.getItem(this.storageKey) || "[]");
+  getFlashcards() {
+    const data = localStorage.getItem(this.storageKey);
+    return data ? JSON.parse(data) : [];
+  }
 
-  getFlashcard = (id) => this.getFlashcards().find((fc) => fc.id === id);
-
-  saveFlashcards = (data) =>
-    localStorage.setItem(this.storageKey, JSON.stringify(data));
+  saveFlashcards(f) {
+    localStorage.setItem(this.storageKey, JSON.stringify(f));
+  }
+  generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  }
 
   createFlashcard(title, fields) {
-    const all = this.getFlashcards();
-    const card = {
+    const f = this.getFlashcards();
+    const n = {
       id: this.generateId(),
       title,
       fields,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    all.push(card);
-    this.saveFlashcards(all);
+    f.push(n);
+    this.saveFlashcards(f);
     this.loadFlashcards();
     showToast("Flashcard created successfully!");
+    return n;
+  }
+
+  getFlashcard(id) {
+    return this.getFlashcards().find((fc) => fc.id === id);
   }
 
   updateFlashcard(id, title, fields) {
-    const all = this.getFlashcards();
-    const i = all.findIndex((f) => f.id === id);
-    if (i < 0) return;
-    all[i] = { ...all[i], title, fields, updatedAt: new Date().toISOString() };
-    this.saveFlashcards(all);
-    this.loadFlashcards();
-    showToast("Flashcard updated successfully!");
+    const f = this.getFlashcards(),
+      i = f.findIndex((fc) => fc.id === id);
+    if (i !== -1) {
+      f[i] = { ...f[i], title, fields, updatedAt: new Date().toISOString() };
+      this.saveFlashcards(f);
+      this.loadFlashcards();
+      showToast("Flashcard updated successfully!");
+      return f[i];
+    }
+    return null;
   }
 
   deleteFlashcard(id) {
-    this.saveFlashcards(this.getFlashcards().filter((f) => f.id !== id));
+    this.saveFlashcards(this.getFlashcards().filter((fc) => fc.id !== id));
     this.loadFlashcards();
     showToast("Flashcard deleted successfully!");
   }
 
-  searchFlashcards = (q) => {
+  searchFlashcards(q) {
     const s = q.toLowerCase();
     return this.getFlashcards().filter(
       (fc) =>
@@ -63,41 +75,52 @@ class FlashcardManager {
             f.explanation?.toLowerCase().includes(s)
         )
     );
-  };
+  }
 
   loadFlashcards(search = "") {
-    const data = search ? this.searchFlashcards(search) : this.getFlashcards(),
-      container = document.querySelector(".max-w-6xl.mx-auto.space-y-2"),
-      alertBox = document.getElementById("search-alert"),
-      tutorial = document.getElementById("tutorial-card");
+    const f = search ? this.searchFlashcards(search) : this.getFlashcards(),
+      c = document.querySelector(".max-w-6xl.mx-auto.space-y-2"),
+      a = document.getElementById("search-alert"),
+      t = document.getElementById("tutorial-card");
 
-    container
-      .querySelectorAll(".card.w-full:not(#tutorial-card)")
-      .forEach((c) => c.remove());
-    tutorial?.classList.toggle("hidden", !(data.length === 0 && !search));
-    if (alertBox) {
-      alertBox.querySelector("span").textContent = search
-        ? `Found ${data.length} flashcard(s) matching "${search}"`
-        : "";
-      alertBox.classList.toggle("hidden", !search);
-    }
+    c.querySelectorAll(".card.w-full:not(#tutorial-card)").forEach((card) =>
+      card.remove()
+    );
+    t &&
+      (f.length === 0 && !search
+        ? t.classList.remove("hidden")
+        : t.classList.add("hidden"));
+    a &&
+      ((a.querySelector("span").textContent = search
+        ? `Found ${f.length} flashcard(s) matching "${search}"`
+        : ""),
+      a.classList.toggle("hidden", !search));
 
-    data.forEach((fc) =>
-      container.insertAdjacentHTML("beforeend", this.createCardHTML(fc))
+    f.forEach((fc) =>
+      c.insertAdjacentHTML("beforeend", this.createCardHTML(fc))
     );
 
-    container.querySelectorAll(".card.w-full").forEach((card) =>
+    c.querySelectorAll(".card.w-full").forEach((card) => {
       card.addEventListener("click", (e) => {
-        if (!e.target.closest(".dropdown"))
-          this.openPreviewModal(card.dataset.id);
-      })
-    );
+        if (
+          !e.target.closest(".dropdown") &&
+          !e.target.closest(".dropdown-content")
+        ) {
+          const id = card.getAttribute("data-id");
+          this.openPreviewModal(id);
+        }
+      });
+    });
 
     lucide.createIcons();
   }
 
   toggleSelection(id, checked) {
-    checked ? this.selectedIds.add(id) : this.selectedIds.delete(id);
+    if (checked) {
+      this.selectedIds.add(id);
+    } else {
+      this.selectedIds.delete(id);
+    }
     this.updateDeleteButtonState();
   }
 
@@ -259,56 +282,58 @@ class FlashcardManager {
   }
 
   setupSelectionControls() {
-    const delBtn = document.getElementById("deleteSelectedBtn"),
-      allBtn = document.getElementById("selectAllBtn");
+    const deleteBtn = document.getElementById("deleteSelectedBtn");
+    const selectAllBtn = document.getElementById("selectAllBtn");
 
-    delBtn.addEventListener("click", () => {
+    deleteBtn.addEventListener("click", () => {
       if (this.selectedIds.size < 2) return;
       const modal = document.getElementById("delete_modal");
       modal.showModal();
-      const confirm = modal.querySelector(".btn-sm.bg-base-100");
-      confirm.replaceWith(confirm.cloneNode(true));
-      modal
-        .querySelector(".btn-sm.bg-base-100")
-        .addEventListener("click", () => {
-          const rest = this.getFlashcards().filter(
-            (fc) => !this.selectedIds.has(fc.id)
-          );
-          this.saveFlashcards(rest);
-          this.selectedIds.clear();
-          this.loadFlashcards();
-          this.updateDeleteButtonState();
-          modal.close();
-          showToast("Selected flashcards deleted!");
-        });
+
+      const confirmBtn = modal.querySelector(".btn-sm.bg-base-100");
+      const cloned = confirmBtn.cloneNode(true);
+      confirmBtn.parentNode.replaceChild(cloned, confirmBtn);
+
+      cloned.addEventListener("click", () => {
+        const remaining = this.getFlashcards().filter(
+          (fc) => !this.selectedIds.has(fc.id)
+        );
+        this.saveFlashcards(remaining);
+        this.selectedIds.clear();
+        modal.close();
+        this.loadFlashcards();
+        this.updateDeleteButtonState();
+        showToast("Selected flashcards deleted!");
+      });
     });
 
-    allBtn.addEventListener("click", () => {
+    selectAllBtn.addEventListener("click", () => {
       const cards = document.querySelectorAll(".card[data-id]");
       const allSelected = this.selectedIds.size === cards.length;
-      this.selectedIds = allSelected
-        ? new Set()
-        : new Set([...cards].map((c) => c.dataset.id));
+
+      if (allSelected) {
+        this.selectedIds.clear();
+      } else {
+        cards.forEach((card) => this.selectedIds.add(card.dataset.id));
+      }
+
       this.syncCheckboxes();
       this.updateDeleteButtonState();
     });
   }
 
   updateDeleteButtonState() {
-    const btn = document.getElementById("deleteSelectedBtn"),
-      active = this.selectedIds.size >= 2;
-    btn.disabled = !active;
-    btn.classList.toggle("opacity-60", !active);
-    btn.classList.toggle("cursor-not-allowed", !active);
+    const deleteBtn = document.getElementById("deleteSelectedBtn");
+    const enabled = this.selectedIds.size >= 2;
+    deleteBtn.disabled = !enabled;
+    deleteBtn.classList.toggle("opacity-60", !enabled);
+    deleteBtn.classList.toggle("cursor-not-allowed", !enabled);
   }
 
   syncCheckboxes() {
-    document
-      .querySelectorAll('.card input[type="checkbox"]')
-      .forEach(
-        (chk) =>
-          (chk.checked = this.selectedIds.has(chk.closest(".card").dataset.id))
-      );
+    document.querySelectorAll('.card input[type="checkbox"]').forEach((chk) => {
+      chk.checked = this.selectedIds.has(chk.closest(".card").dataset.id);
+    });
   }
 
   addFieldToModal(c) {
@@ -390,10 +415,11 @@ class FlashcardManager {
     const m = document.getElementById("delete_modal"),
       s = m.querySelector(".btn-sm.bg-base-100"),
       n = s.cloneNode(true);
-    s.replaceWith(n);
+    s.parentNode.replaceChild(n, s);
     n.addEventListener("click", () => {
       this.deleteFlashcard(id);
       m.close();
+      this.currentEditId = null;
     });
     m.showModal();
   }
@@ -529,24 +555,23 @@ class FlashcardManager {
   }
 
   exportToJSON() {
-    const data = this.getFlashcards();
-    if (!data.length) return showToast("No flashcards to export.");
-    const blob = new Blob(
-      [
-        JSON.stringify(
-          data.map((x) => ({ title: x.title, fields: x.fields })),
-          null,
-          2
-        ),
-      ],
-      { type: "application/json" }
-    );
-    const a = Object.assign(document.createElement("a"), {
-      href: URL.createObjectURL(blob),
-      download: "flashcards.json",
-    });
+    const f = this.getFlashcards();
+    if (!f.length) {
+      showToast("No flashcards to export.");
+      return;
+    }
+    const d = JSON.stringify(
+        f.map((x) => ({ title: x.title, fields: x.fields })),
+        null,
+        2
+      ),
+      b = new Blob([d], { type: "application/json" }),
+      u = URL.createObjectURL(b),
+      a = document.createElement("a");
+    a.href = u;
+    a.download = "flashcards.json";
     a.click();
-    URL.revokeObjectURL(a.href);
+    URL.revokeObjectURL(u);
     showToast("Flashcards exported successfully!");
   }
 }
@@ -686,3 +711,4 @@ function showToast(message) {
     toast.classList.add("opacity-0", "pointer-events-none");
   }, 3000);
 }
+
