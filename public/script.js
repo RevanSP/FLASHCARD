@@ -97,6 +97,14 @@ class FlashcardManager {
       })
     );
 
+    const selectAllBtn = document.getElementById("selectAllBtn");
+    if (selectAllBtn) {
+      const hasData = data.length > 0;
+      selectAllBtn.disabled = !hasData;
+      selectAllBtn.classList.toggle("opacity-60", !hasData);
+      selectAllBtn.classList.toggle("cursor-not-allowed", !hasData);
+    }
+
     lucide.createIcons();
   }
 
